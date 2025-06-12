@@ -545,7 +545,7 @@ def generate_scripts_section(rule_ids, eval_db, host_info):
                         <div class="script-header">[{rule_id}] {rule_name} - {script_name}</div>
                         <div class="script-code">{script_content}</div>
                         <div style="margin-top: 10px;">
-                            <small><strong>사용법:</strong> chmod +x {script_name} && ./{script_name} [target_ip]</small><br>
+                            <small><strong>사용법:</strong> chmod +x {script_name} && ./{script_name}</small><br>
                             <small><em>※ root 권한으로 실행하며, 대상 IP를 인자로 전달하세요.</em></small>
                         </div>
                     </div>
