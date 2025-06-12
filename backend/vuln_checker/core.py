@@ -316,18 +316,8 @@ def analyze_host_basic_vulnerabilities(ip: str, host_data: dict) -> list:
 
 
 def determine_cve_severity(cve: str) -> str:
-    """CVE 심각도 판정"""
-    # 년도 기반 심각도 (최근일수록 높음)
-    try:
-        year = int(cve.split('-')[1])
-        if year >= 2020:
-            return "high"
-        elif year >= 2015:
-            return "medium"
-        else:
-            return "low"
-    except:
-        return "medium"
+    """CVE 심각도 판정 - 모든 CVE를 Critical로 설정"""
+    return "critical"
 
 
 def determine_rule_severity(rule_id: str) -> str:
