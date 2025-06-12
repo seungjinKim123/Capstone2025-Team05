@@ -492,17 +492,6 @@ def generate_html_template(hosts, vulnerabilities, recommendations, eval_db, met
         
         html_content += '</ul></div>'
     
-    # 다운로드 섹션 추가
-    html_content += '''
-        <div class="download-section">
-            <h2>📥 추가 자료 다운로드</h2>
-            <p>점검 스크립트와 체크리스트를 별도 파일로 다운로드할 수 있습니다.</p>
-            <a href="#" class="download-btn" onclick="alert('점검 스크립트 생성 기능을 구현하세요.')">🔧 점검 스크립트 다운로드</a>
-            <a href="#" class="download-btn" onclick="alert('체크리스트 문서 생성 기능을 구현하세요.')">📋 체크리스트 다운로드</a>
-            <a href="#" class="download-btn" onclick="window.print()">🖨️ 보고서 인쇄</a>
-        </div>
-'''
-    
     # 푸터
     html_content += f'''
         <div class="footer">
