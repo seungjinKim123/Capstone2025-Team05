@@ -1,0 +1,10 @@
+# Nmap 7.93 scan initiated Thu Jun 12 14:33:39 2025 as: nmap -sS -p 1-1024 -sV -sC -A -T4 -oA data/scan_results/테스트_스캔/scan_20250612_143338 192.168.45.1/32 192.168.45.2/31 192.168.45.4/30 192.168.45.8/29 192.168.45.16/28 192.168.45.32/27 192.168.45.64/26 192.168.45.128/26 192.168.45.192/27 192.168.45.224/28 192.168.45.240/29 192.168.45.248/30 192.168.45.252/31 192.168.45.254/32
+Host: 192.168.45.1 ()	Status: Up
+Host: 192.168.45.1 ()	Ports: 1/filtered/tcp//tcpmux///, 11/filtered/tcp//systat///, 15/filtered/tcp//netstat///, 22/filtered/tcp//ssh///, 79/filtered/tcp//finger///, 80/open/tcp//http//Boa HTTPd 0.93.15/, 82/open/tcp//http//BusyBox httpd 1.13/, 111/filtered/tcp//rpcbind///, 119/filtered/tcp//nntp///, 143/filtered/tcp//imap///, 540/filtered/tcp//uucp///, 635/filtered/tcp//rlzdbase///	Ignored State: closed (1012)	Seq Index: 260	IP ID Seq: All zeros
+Host: 192.168.45.44 ()	Status: Up
+Host: 192.168.45.44 ()	Ports: 	Ignored State: closed (1024)
+Host: 192.168.45.86 ()	Status: Up
+Host: 192.168.45.86 ()	Ports: 
+Host: 192.168.45.109 ()	Status: Up
+Host: 192.168.45.109 ()	Ports: 	Ignored State: closed (1024)
+# Nmap done at Thu Jun 12 14:34:11 2025 -- 254 IP addresses (4 hosts up) scanned in 32.85 seconds

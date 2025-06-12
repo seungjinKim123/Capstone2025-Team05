@@ -1,0 +1,4 @@
+# Nmap 7.93 scan initiated Thu Jun 12 14:37:07 2025 as: nmap -sS -p 1-1024 -sV -sC -A -T4 -oA data/scan_results/테스트_스캔/scan_20250612_143706 192.168.45.109/32
+Host: 192.168.45.109 ()	Status: Up
+Host: 192.168.45.109 ()	Ports: 	Ignored State: closed (1024)
+# Nmap done at Thu Jun 12 14:37:08 2025 -- 1 IP address (1 host up) scanned in 2.08 seconds

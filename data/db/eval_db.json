@@ -1,0 +1,827 @@
+{
+    "11303": {
+        "name": "관리대장 누락",
+        "description": "보안관리자용 기록관리 시스템에 등록되지 않은 호스트 또는 서비스",
+        "general_mitigation": "모든 자산과 서비스에 대해 관리대장을 작성하고 주기적으로 검토해야 합니다.",
+        "module": "rule_11303",
+        "check_script": "check_asset_inventory.sh",
+        "original_script": "u-06.sh",
+        "checklist_items": [
+            "전체 IP 자산에 대한 관리대장 작성 여부 확인",
+            "관리대장과 실제 운영 자산의 일치성 검토",
+            "미등록 자산 발견 시 즉시 등록 절차 수행",
+            "주기적(월 1회) 자산 현황 점검 및 업데이트"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "20501": {
+        "name": "접근통제 미흡",
+        "description": "익명 FTP, PostgreSQL 등 서비스에 기본 계정/익명 접근이 가능한 경우",
+        "general_mitigation": "서비스 접근 시 인증체계를 적용하고 기본 계정 및 익명 접근을 제한해야 합니다.",
+        "module": "rule_20501",
+        "check_script": "check_access_control.sh",
+        "original_script": "u-01.sh,u-20.sh",
+        "checklist_items": [
+            "FTP 익명 접속 비활성화 확인 (u-20.sh 참조)",
+            "SSH/Telnet 루트 로그인 비활성화 확인 (u-01.sh 참조)",
+            "데이터베이스 기본 계정 비활성화 또는 패스워드 변경",
+            "서비스별 강력한 인증 정책 적용 확인"
+        ],
+        "match": [
+            { "service": "ftp", "allows_anonymous": true },
+            { "service": "postgresql", "account_used": "postgres" }
+        ]
+    },
+    "20502": {
+        "name": "SSH 약한 인증",
+        "description": "SSH 서비스에서 약한 패스워드 사용 또는 루트 로그인 허용",
+        "general_mitigation": "SSH 루트 로그인을 비활성화하고 키 기반 인증을 사용해야 합니다.",
+        "module": "rule_20502",
+        "check_script": "check_ssh_security.sh",
+        "original_script": "u-01.sh",
+        "checklist_items": [
+            "SSH 루트 로그인 비활성화 (PermitRootLogin no)",
+            "SSH 키 기반 인증 사용",
+            "SSH 접속 시도 제한 설정",
+            "SSH 기본 포트 변경 고려"
+        ],
+        "match": [{ "service": "ssh", "port": 22 }]
+    },
+    "20503": {
+        "name": "기본포트 사용 및 취약한 서비스 운용",
+        "description": "Telnet, FTP, rlogin 등 보안성이 취약한 서비스가 기본 포트로 운용되는 경우",
+        "general_mitigation": "보안성이 낮은 서비스를 사용하지 않거나, VPN 내에서 사용하며 SSH 등 보안 대체 수단을 사용해야 합니다.",
+        "module": "rule_20503",
+        "check_script": "check_insecure_services.sh",
+        "original_script": "u-19.sh,u-21.sh,u-23.sh,u-29.sh",
+        "checklist_items": [
+            "Telnet 서비스 비활성화 및 SSH로 대체",
+            "FTP 서비스 비활성화 및 SFTP/SCP로 대체",
+            "finger 서비스 비활성화 (u-19.sh 참조)",
+            "r-command 서비스 비활성화 (u-21.sh 참조)",
+            "DoS 취약 서비스 비활성화 (u-23.sh 참조)"
+        ],
+        "match": [
+            { "service": "telnet", "port": 23 },
+            { "service": "ftp", "port": 21 },
+            { "service": "rlogin", "port": 513 }
+        ]
+    },
+    "30301": {
+        "name": "관리대장 누락 (네트워크)",
+        "description": "연결된 장비가 관리대장에 포함되지 않음 (물리 네트워크 추적 기준)",
+        "general_mitigation": "물리적/논리적 연결 장비의 MAC 주소를 식별하고 자산 등록을 철저히 해야 합니다.",
+        "module": "rule_30301",
+        "check_script": "check_network_inventory.sh",
+        "original_script": "u-06.sh",
+        "checklist_items": [
+            "네트워크 연결 장비의 MAC 주소 수집",
+            "물리적 네트워크 토폴로지 문서화",
+            "미등록 네트워크 장비 탐지 및 등록",
+            "네트워크 장비 관리대장 주기적 업데이트"
+        ],
+        "match": [{ "mac": "*" }]
+    },
+    "30501": {
+        "name": "불필요한 서비스 운영",
+        "description": "업무와 무관한 불필요한 서비스가 실행 중인 경우",
+        "general_mitigation": "업무에 필요하지 않은 서비스는 중지하고 필요한 서비스만 운영해야 합니다.",
+        "module": "rule_30501",
+        "check_script": "check_unnecessary_services.sh",
+        "original_script": "u-19.sh,u-23.sh,u-24.sh,u-26.sh,u-27.sh,u-28.sh,u-29.sh",
+        "checklist_items": [
+            "finger 서비스 비활성화 (u-19.sh)",
+            "DoS 취약 서비스 비활성화 (u-23.sh)",
+            "불필요한 NFS 서비스 비활성화 (u-24.sh)",
+            "automountd 서비스 비활성화 (u-26.sh)",
+            "불필요한 RPC 서비스 비활성화 (u-27.sh)",
+            "NIS 서비스 비활성화 (u-28.sh)",
+            "tftp/talk 서비스 비활성화 (u-29.sh)"
+        ],
+        "match": [
+            { "service": "finger", "port": 79 },
+            { "service": "echo", "port": 7 },
+            { "service": "discard", "port": 9 }
+        ]
+    },
+    "30601": {
+        "name": "SNMP 보안 설정 미흡",
+        "description": "SNMP 서비스에서 기본 커뮤니티 스트링 사용 또는 읽기/쓰기 권한 부여",
+        "general_mitigation": "SNMP 커뮤니티 스트링을 변경하고 읽기 전용으로 설정해야 합니다.",
+        "module": "rule_30601",
+        "check_script": "check_snmp_security.sh",
+        "original_script": "",
+        "checklist_items": [
+            "SNMP 기본 커뮤니티 스트링(public, private) 변경",
+            "SNMP 읽기 전용 권한 설정",
+            "SNMP 접근 IP 제한 설정",
+            "SNMPv3 사용 검토"
+        ],
+        "match": [{ "service": "snmp", "port": 161 }]
+    },
+    "30701": {
+        "name": "웹 서버 보안 설정 미흡",
+        "description": "웹 서버에서 디렉토리 리스팅, 불필요한 HTTP 메소드 허용 등",
+        "general_mitigation": "웹 서버 보안 설정을 강화하고 불필요한 기능을 비활성화해야 합니다.",
+        "module": "rule_30701",
+        "check_script": "check_web_security.sh",
+        "original_script": "u-35.sh,u-36.sh,u-37.sh,u-38.sh,u-39.sh,u-40.sh,u-41.sh",
+        "checklist_items": [
+            "디렉토리 브라우징 비활성화 (u-35.sh)",
+            "Apache 데몬 root 권한 제한 (u-36.sh)",
+            "상위 디렉터리 접근 제한 (u-37.sh)",
+            "불필요한 기본 파일 제거 (u-38.sh)",
+            "심볼릭 링크 사용 제한 (u-39.sh)",
+            "파일 업로드 크기 제한 (u-40.sh)",
+            "웹 루트 디렉터리 분리 (u-41.sh)"
+        ],
+        "match": [
+            { "service": "http", "port": 80 },
+            { "service": "https", "port": 443 }
+        ]
+    },
+    "30802": {
+        "name": "버전정보 노출",
+        "description": "서비스에서 버전 정보가 노출될 경우 공격자가 취약점을 파악할 수 있음",
+        "general_mitigation": "서비스 배너, 오류 메시지 등을 통해 버전 정보가 노출되지 않도록 설정합니다.",
+        "module": "rule_30802",
+        "check_script": "check_version_disclosure.sh",
+        "original_script": "",
+        "checklist_items": [
+            "웹 서버 버전 정보 숨김 설정",
+            "SSH 배너 정보 최소화",
+            "FTP 환영 메시지에서 버전 정보 제거",
+            "에러 메시지에서 시스템 정보 노출 방지"
+        ],
+        "match": [
+            { "service": "http", "product_regex": "Apache.*", "version_exposure": true },
+            { "service": "ssh", "version_exposure": true }
+        ]
+    },
+    "40101": {
+        "name": "패치 관리 미흡",
+        "description": "시스템 및 애플리케이션의 보안 패치가 적용되지 않은 경우",
+        "general_mitigation": "정기적인 보안 패치 적용 및 패치 관리 정책을 수립해야 합니다.",
+        "module": "rule_40101",
+        "check_script": "check_patch_status.sh",
+        "original_script": "u-42.sh",
+        "checklist_items": [
+            "운영체제 최신 보안 패치 적용 여부 확인 (u-42.sh)",
+            "애플리케이션 보안 업데이트 적용 여부 확인",
+            "패치 적용 전 테스트 절차 수립",
+            "긴급 패치 적용 절차 수립"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-01": {
+        "name": "root 계정 원격 접속 제한",
+        "description": "SSH, Telnet을 통한 root 계정 원격 접속이 허용된 경우",
+        "general_mitigation": "SSH/Telnet에서 root 계정 직접 로그인을 비활성화해야 합니다.",
+        "module": "rule_u01",
+        "check_script": "u-01.sh",
+        "original_script": "u-01.sh",
+        "checklist_items": [
+            "SSH PermitRootLogin 설정을 no로 변경",
+            "Telnet 서비스에서 root 접속 차단",
+            "sudo 또는 su를 통한 권한 상승 사용",
+            "원격 접속 로그 모니터링"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-02": {
+        "name": "패스워드 복잡성 설정",
+        "description": "패스워드 최소 길이, 복잡성 요구사항이 설정되지 않은 경우",
+        "general_mitigation": "패스워드 최소 길이 8자 이상, 영문 대소문자, 숫자, 특수문자 조합 사용을 강제해야 합니다.",
+        "module": "rule_u02",
+        "check_script": "u-02.sh",
+        "original_script": "u-02.sh",
+        "checklist_items": [
+            "/etc/security/pwquality.conf에서 minlen >= 8 설정",
+            "dcredit, ucredit, lcredit, ocredit 중 3개 이상 -1 설정",
+            "패스워드 정책 사용자 교육 실시",
+            "정기적인 패스워드 변경 정책 수립"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-03": {
+        "name": "계정 잠금 임계값 설정",
+        "description": "로그인 실패 시 계정 잠금 정책이 설정되지 않은 경우",
+        "general_mitigation": "로그인 실패 횟수 10회 이하로 제한하고 계정 잠금 정책을 설정해야 합니다.",
+        "module": "rule_u03",
+        "check_script": "u-03.sh",
+        "original_script": "u-03.sh",
+        "checklist_items": [
+            "로그인 실패 임계값 10회 이하 설정",
+            "계정 잠금 정책 적용",
+            "잠금 해제 절차 수립",
+            "로그인 실패 로그 모니터링"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-04": {
+        "name": "패스워드 파일 보호",
+        "description": "Shadow 패스워드 사용 여부 및 패스워드 파일 보호 상태 점검",
+        "general_mitigation": "Shadow 패스워드를 사용하고 패스워드 파일의 적절한 권한을 설정해야 합니다.",
+        "module": "rule_u04",
+        "check_script": "u-04.sh",
+        "original_script": "u-04.sh",
+        "checklist_items": [
+            "/etc/shadow 파일 존재 확인",
+            "/etc/passwd 파일에서 패스워드 필드 'x' 확인",
+            "패스워드 파일 권한 적절성 확인",
+            "평문 패스워드 사용 금지"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-05": {
+        "name": "root 권한 및 패스 설정",
+        "description": "root 계정의 PATH 환경변수에 '.' 이 포함된 경우",
+        "general_mitigation": "root 계정의 PATH에서 현재 디렉토리('.')를 제거해야 합니다.",
+        "module": "rule_u05",
+        "check_script": "u-05.sh",
+        "original_script": "u-05.sh",
+        "checklist_items": [
+            "root 계정 PATH 환경변수 확인",
+            "PATH에서 '.' 제거",
+            "안전한 PATH 설정",
+            "환경변수 보안 정책 수립"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-06": {
+        "name": "파일 및 디렉터리 소유자 설정",
+        "description": "소유자가 없는 파일이나 디렉터리가 존재하는 경우",
+        "general_mitigation": "시스템의 모든 파일과 디렉터리가 적절한 소유자를 가지도록 설정해야 합니다.",
+        "module": "rule_u06",
+        "check_script": "u-06.sh",
+        "original_script": "u-06.sh",
+        "checklist_items": [
+            "소유자 없는 파일/디렉터리 검색",
+            "발견된 파일의 적절한 소유자 설정",
+            "정기적인 파일 소유권 점검",
+            "파일 생성 시 기본 소유자 정책 수립"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-07": {
+        "name": "/etc/passwd 파일 소유자 및 권한 설정",
+        "description": "/etc/passwd 파일의 소유자가 root가 아니거나 권한이 부적절한 경우",
+        "general_mitigation": "/etc/passwd 파일의 소유자를 root로 설정하고 권한을 644 이하로 설정해야 합니다.",
+        "module": "rule_u07",
+        "check_script": "u-07.sh",
+        "original_script": "u-07.sh",
+        "checklist_items": [
+            "/etc/passwd 파일 소유자 root 확인",
+            "/etc/passwd 파일 권한 644 이하 확인",
+            "파일 무결성 모니터링 설정",
+            "정기적인 파일 권한 점검"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-08": {
+        "name": "/etc/shadow 파일 소유자 및 권한 설정",
+        "description": "/etc/shadow 파일의 소유자가 root가 아니거나 권한이 부적절한 경우",
+        "general_mitigation": "/etc/shadow 파일의 소유자를 root로 설정하고 권한을 400 이하로 설정해야 합니다.",
+        "module": "rule_u08",
+        "check_script": "u-08.sh",
+        "original_script": "u-08.sh",
+        "checklist_items": [
+            "/etc/shadow 파일 소유자 root 확인",
+            "/etc/shadow 파일 권한 400 이하 확인",
+            "패스워드 파일 백업 관리",
+            "파일 접근 로그 모니터링"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-09": {
+        "name": "/etc/hosts 파일 소유자 및 권한 설정",
+        "description": "/etc/hosts 파일의 소유자가 root가 아니거나 권한이 부적절한 경우",
+        "general_mitigation": "/etc/hosts 파일의 소유자를 root로 설정하고 권한을 600 이하로 설정해야 합니다.",
+        "module": "rule_u09",
+        "check_script": "u-09.sh",
+        "original_script": "u-09.sh",
+        "checklist_items": [
+            "/etc/hosts 파일 소유자 root 확인",
+            "/etc/hosts 파일 권한 600 이하 확인",
+            "hosts 파일 무단 수정 방지",
+            "DNS 설정과 일치성 확인"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-10": {
+        "name": "/etc/inetd.conf 파일 소유자 및 권한 설정",
+        "description": "inetd 관련 설정 파일의 소유자가 root가 아니거나 권한이 부적절한 경우",
+        "general_mitigation": "inetd 관련 설정 파일의 소유자를 root로 설정하고 권한을 600 이하로 설정해야 합니다.",
+        "module": "rule_u10",
+        "check_script": "u-10.sh",
+        "original_script": "u-10.sh",
+        "checklist_items": [
+            "/etc/inetd.conf 파일 소유자 root 확인",
+            "/etc/xinetd.conf 및 /etc/xinetd.d/* 파일 권한 확인",
+            "불필요한 서비스 비활성화",
+            "inetd 서비스 보안 설정"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-11": {
+        "name": "/etc/syslog 파일 소유자 및 권한 설정",
+        "description": "시스템 로그 설정 파일의 소유자가 root가 아니거나 권한이 부적절한 경우",
+        "general_mitigation": "로그 설정 파일의 소유자를 root로 설정하고 권한을 640 이하로 설정해야 합니다.",
+        "module": "rule_u11",
+        "check_script": "u-11.sh",
+        "original_script": "u-11.sh",
+        "checklist_items": [
+            "/etc/syslog.conf 파일 소유자 및 권한 확인",
+            "/etc/rsyslog.conf 파일 보안 설정",
+            "로그 파일 순환 정책 설정",
+            "로그 무결성 보호 방안 수립"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-12": {
+        "name": "/etc/services 파일 소유자 및 권한 설정",
+        "description": "/etc/services 파일의 소유자가 적절하지 않거나 권한이 부적절한 경우",
+        "general_mitigation": "/etc/services 파일의 소유자를 root/bin/sys로 설정하고 권한을 644 이하로 설정해야 합니다.",
+        "module": "rule_u12",
+        "check_script": "u-12.sh",
+        "original_script": "u-12.sh",
+        "checklist_items": [
+            "/etc/services 파일 소유자 root/bin/sys 확인",
+            "/etc/services 파일 권한 644 이하 확인",
+            "서비스 포트 정의 검토",
+            "불필요한 서비스 항목 제거"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-13": {
+        "name": "SUID/SGID 설정 파일 점검",
+        "description": "불필요하거나 위험한 파일에 SUID/SGID가 설정된 경우",
+        "general_mitigation": "불필요한 SUID/SGID 설정을 제거하고 필요한 경우에만 최소 권한으로 설정해야 합니다.",
+        "module": "rule_u13",
+        "check_script": "u-13.sh",
+        "original_script": "u-13.sh",
+        "checklist_items": [
+            "시스템 전체 SUID/SGID 파일 목록 작성",
+            "불필요한 SUID/SGID 권한 제거",
+            "위험한 SUID 프로그램 대체 방안 검토",
+            "정기적인 SUID/SGID 파일 모니터링"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-14": {
+        "name": "사용자 홈 디렉터리 파일 점검",
+        "description": "사용자 홈 디렉터리 내 설정 파일의 소유자나 권한이 부적절한 경우",
+        "general_mitigation": "사용자 홈 디렉터리의 설정 파일들이 적절한 소유자와 권한을 가지도록 설정해야 합니다.",
+        "module": "rule_u14",
+        "check_script": "u-14.sh",
+        "original_script": "u-14.sh",
+        "checklist_items": [
+            "홈 디렉터리 환경설정 파일 소유자 확인",
+            "다른 사용자 쓰기 권한 제거",
+            "중요 설정 파일 보호",
+            "사용자 권한 교육 실시"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-15": {
+        "name": "world writable 파일 점검",
+        "description": "모든 사용자가 쓰기 가능한 파일이 존재하는 경우",
+        "general_mitigation": "world writable 권한을 제거하고 필요한 경우에만 최소 권한으로 설정해야 합니다.",
+        "module": "rule_u15",
+        "check_script": "u-15.sh",
+        "original_script": "u-15.sh",
+        "checklist_items": [
+            "시스템 전체 world writable 파일 검색",
+            "불필요한 world writable 권한 제거",
+            "임시 디렉터리 보안 설정",
+            "파일 권한 정책 수립"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-16": {
+        "name": "/dev에 존재하지 않는 device 파일 점검",
+        "description": "/dev 디렉터리에 일반 파일이 존재하는 경우",
+        "general_mitigation": "/dev 디렉터리에서 device 파일이 아닌 일반 파일을 제거해야 합니다.",
+        "module": "rule_u16",
+        "check_script": "u-16.sh",
+        "original_script": "u-16.sh",
+        "checklist_items": [
+            "/dev 디렉터리 내 일반 파일 확인",
+            "불필요한 일반 파일 제거",
+            "device 파일 무결성 확인",
+            "/dev 디렉터리 접근 권한 관리"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-17": {
+        "name": "rhosts, hosts.equiv 사용 금지",
+        "description": "rhosts나 hosts.equiv 파일이 부적절하게 설정된 경우",
+        "general_mitigation": "rhosts와 hosts.equiv 파일을 제거하거나 적절한 권한으로 설정해야 합니다.",
+        "module": "rule_u17",
+        "check_script": "u-17.sh",
+        "original_script": "u-17.sh",
+        "checklist_items": [
+            "/etc/hosts.equiv 파일 존재 여부 및 내용 확인",
+            "사용자 홈 디렉터리 .rhosts 파일 확인",
+            "'+' 설정 제거",
+            "r-command 서비스 비활성화"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-18": {
+        "name": "접속 IP 및 포트 제한",
+        "description": "TCP Wrapper나 방화벽을 통한 접근 제어가 설정되지 않은 경우",
+        "general_mitigation": "TCP Wrapper나 방화벽을 사용하여 접속 IP와 포트를 제한해야 합니다.",
+        "module": "rule_u18",
+        "check_script": "u-18.sh",
+        "original_script": "u-18.sh",
+        "checklist_items": [
+            "/etc/hosts.deny에 ALL:ALL 설정 확인",
+            "/etc/hosts.allow에 허용 IP 설정 확인",
+            "TCP Wrapper 기능 활성화 확인",
+            "방화벽 정책 설정 및 관리"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-19": {
+        "name": "finger 서비스 비활성화",
+        "description": "finger 서비스가 활성화되어 사용자 정보 노출 위험이 있는 경우",
+        "general_mitigation": "finger 서비스를 비활성화하고 사용자 정보 노출을 방지해야 합니다.",
+        "module": "rule_u19",
+        "check_script": "u-19.sh",
+        "original_script": "u-19.sh",
+        "checklist_items": [
+            "finger 서비스 실행 상태 확인",
+            "inetd/xinetd에서 finger 서비스 비활성화",
+            "사용자 정보 노출 방지",
+            "대체 사용자 정보 제공 방안 검토"
+        ],
+        "match": [{ "service": "finger", "port": 79 }]
+    },
+    "u-20": {
+        "name": "익명 FTP 접속 허용 여부",
+        "description": "FTP 서비스에서 익명 접속이 허용되어 있는 경우",
+        "general_mitigation": "익명 FTP 접속을 비활성화하고 인증된 사용자만 접근할 수 있도록 설정해야 합니다.",
+        "module": "rule_u20",
+        "check_script": "u-20.sh",
+        "original_script": "u-20.sh",
+        "checklist_items": [
+            "/etc/passwd에서 ftp 계정 존재 여부 확인",
+            "FTP 서비스 익명 접속 설정 확인",
+            "FTP 서비스 보안 설정 강화",
+            "SFTP/SCP 등 보안 대안 검토"
+        ],
+        "match": [{ "service": "ftp", "allows_anonymous": true }]
+    },
+    "u-21": {
+        "name": "r-command 서비스 비활성화",
+        "description": "rsh, rlogin, rexec 등 r-command 서비스가 활성화된 경우",
+        "general_mitigation": "r-command 서비스를 비활성화하고 SSH 등 보안 대안을 사용해야 합니다.",
+        "module": "rule_u21",
+        "check_script": "u-21.sh",
+        "original_script": "u-21.sh",
+        "checklist_items": [
+            "rsh, rlogin, rexec 서비스 비활성화",
+            "xinetd/inetd 설정에서 r-command 제거",
+            "SSH 등 보안 대안 사용",
+            "r-command 관련 파일 제거"
+        ],
+        "match": [{ "service": "rlogin", "port": 513 }]
+    },
+    "u-22": {
+        "name": "Cron 관련 파일의 권한",
+        "description": "crontab 및 cron 관련 파일의 권한이 부적절한 경우",
+        "general_mitigation": "cron 관련 파일의 소유자를 root로 설정하고 적절한 권한을 부여해야 합니다.",
+        "module": "rule_u22",
+        "check_script": "u-22.sh",
+        "original_script": "u-22.sh",
+        "checklist_items": [
+            "crontab 실행 파일 권한 750 이하 확인",
+            "cron 설정 파일 소유자 root 확인",
+            "cron 디렉터리 권한 640 이하 확인",
+            "cron.allow/cron.deny 파일 관리"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-23": {
+        "name": "DoS 공격 취약 서비스 실행 여부",
+        "description": "echo, discard, daytime, chargen 등 DoS 공격에 취약한 서비스가 실행되는 경우",
+        "general_mitigation": "DoS 공격에 취약한 서비스를 비활성화해야 합니다.",
+        "module": "rule_u23",
+        "check_script": "u-23.sh",
+        "original_script": "u-23.sh",
+        "checklist_items": [
+            "echo, discard, daytime, chargen 서비스 비활성화",
+            "xinetd/inetd 설정에서 해당 서비스 제거",
+            "SNMP, NTP 서비스 보안 설정",
+            "불필요한 UDP 서비스 비활성화"
+        ],
+        "match": [
+            { "service": "echo", "port": 7 },
+            { "service": "discard", "port": 9 }
+        ]
+    },
+    "u-24": {
+        "name": "불필요한 NFS 서비스 사용 여부",
+        "description": "불필요한 NFS 관련 데몬이 실행되는 경우",
+        "general_mitigation": "불필요한 NFS 서비스를 비활성화하고 필요한 경우에만 보안 설정을 적용해야 합니다.",
+        "module": "rule_u24",
+        "check_script": "u-24.sh",
+        "original_script": "u-24.sh",
+        "checklist_items": [
+            "nfsd, statd, lockd 등 NFS 데몬 비활성화",
+            "NFS 서비스 필요성 검토",
+            "NFS 사용 시 보안 설정 적용",
+            "/etc/exports 파일 권한 관리"
+        ],
+        "match": [{ "service": "nfs", "port": 2049 }]
+    },
+    "u-25": {
+        "name": "NFS everyone 공유 제한 설정",
+        "description": "NFS에서 everyone 공유가 제한되지 않은 경우",
+        "general_mitigation": "NFS everyone 공유를 제한하고 특정 호스트만 접근할 수 있도록 설정해야 합니다.",
+        "module": "rule_u25",
+        "check_script": "u-25.sh",
+        "original_script": "u-25.sh",
+        "checklist_items": [
+            "/etc/exports에서 everyone 공유 제거",
+            "특정 IP/네트워크만 접근 허용",
+            "NFS 공유 권한 최소화",
+            "정기적인 NFS 설정 검토"
+        ],
+        "match": [{ "service": "nfs", "port": 2049 }]
+    },
+    "u-26": {
+        "name": "automountd 서비스 데몬 실행 여부",
+        "description": "automountd 서비스가 불필요하게 실행되는 경우",
+        "general_mitigation": "불필요한 automountd 서비스를 비활성화해야 합니다.",
+        "module": "rule_u26",
+        "check_script": "u-26.sh",
+        "original_script": "u-26.sh",
+        "checklist_items": [
+            "automountd/autofs 서비스 실행 상태 확인",
+            "자동 마운트 필요성 검토",
+            "불필요한 경우 서비스 비활성화",
+            "수동 마운트 방식 검토"
+        ],
+        "match": [{ "service": "autofs" }]
+    },
+    "u-27": {
+        "name": "불필요한 RPC 서비스 실행 여부",
+        "description": "불필요한 RPC 관련 서비스가 실행되는 경우",
+        "general_mitigation": "불필요한 RPC 서비스를 비활성화해야 합니다.",
+        "module": "rule_u27",
+        "check_script": "u-27.sh",
+        "original_script": "u-27.sh",
+        "checklist_items": [
+            "rpc.cmsd, rpc.ttdbserverd, sadmind 등 비활성화",
+            "rusersd, walld, sprayd, rstatd 등 비활성화",
+            "필요한 RPC 서비스만 선별적 활성화",
+            "RPC 서비스 보안 설정 적용"
+        ],
+        "match": [{ "service": "rpc" }]
+    },
+    "u-28": {
+        "name": "NIS 서비스 비활성화",
+        "description": "NIS(Network Information Service) 관련 서비스가 실행되는 경우",
+        "general_mitigation": "NIS 서비스를 비활성화하고 LDAP 등 보안 대안을 사용해야 합니다.",
+        "module": "rule_u28",
+        "check_script": "u-28.sh",
+        "original_script": "u-28.sh",
+        "checklist_items": [
+            "ypserv, ypbind, ypxfrd 등 NIS 데몬 비활성화",
+            "NIS+ 사용 검토",
+            "LDAP 등 보안 디렉터리 서비스 검토",
+            "NIS 관련 설정 파일 제거"
+        ],
+        "match": [{ "service": "nis" }]
+    },
+    "u-29": {
+        "name": "tftp, talk, ntalk 서비스 활성화 여부",
+        "description": "tftp, talk, ntalk 등 취약한 서비스가 활성화된 경우",
+        "general_mitigation": "tftp, talk, ntalk 서비스를 비활성화해야 합니다.",
+        "module": "rule_u29",
+        "check_script": "u-29.sh",
+        "original_script": "u-29.sh",
+        "checklist_items": [
+            "tftp 서비스 비활성화",
+            "talk, ntalk 서비스 비활성화",
+            "보안 파일 전송 방법 사용 (SFTP 등)",
+            "대화 서비스 대안 검토"
+        ],
+        "match": [
+            { "service": "tftp", "port": 69 },
+            { "service": "talk", "port": 517 }
+        ]
+    },
+    "u-30": {
+        "name": "Sendmail 서비스 취약 버전",
+        "description": "Sendmail이 취약한 버전으로 실행되는 경우",
+        "general_mitigation": "Sendmail을 최신 버전으로 업데이트하거나 보안 대안을 사용해야 합니다.",
+        "module": "rule_u30",
+        "check_script": "u-30.sh",
+        "original_script": "u-30.sh",
+        "checklist_items": [
+            "Sendmail 버전 확인 및 업데이트",
+            "Sendmail 보안 패치 적용",
+            "Postfix 등 보안 대안 검토",
+            "메일 서버 보안 설정 강화"
+        ],
+        "match": [{ "service": "smtp", "port": 25 }]
+    },
+    "u-31": {
+        "name": "SMTP 릴레이 제한 설정",
+        "description": "SMTP 릴레이가 제한되지 않은 경우",
+        "general_mitigation": "SMTP 릴레이를 제한하여 스팸 메일 발송을 방지해야 합니다.",
+        "module": "rule_u31",
+        "check_script": "u-31.sh",
+        "original_script": "u-31.sh",
+        "checklist_items": [
+            "Sendmail 릴레이 제한 설정 확인",
+            "허용된 호스트/네트워크만 릴레이 허용",
+            "오픈 릴레이 테스트 수행",
+            "메일 서버 액세스 제어 설정"
+        ],
+        "match": [{ "service": "smtp", "port": 25 }]
+    },
+    "u-32": {
+        "name": "SMTP 일반사용자 q 옵션 제한",
+        "description": "SMTP에서 일반 사용자의 q 옵션 사용이 제한되지 않은 경우",
+        "general_mitigation": "일반 사용자의 q 옵션 사용을 제한해야 합니다.",
+        "module": "rule_u32",
+        "check_script": "u-32.sh",
+        "original_script": "u-32.sh",
+        "checklist_items": [
+            "PrivacyOptions에 restrictqrun 설정",
+            "일반 사용자 큐 처리 권한 제한",
+            "메일 큐 관리 권한 최소화",
+            "메일 서버 운영 정책 수립"
+        ],
+        "match": [{ "service": "smtp", "port": 25 }]
+    },
+    "u-33": {
+        "name": "BIND 최신 버전 사용 및 패치",
+        "description": "BIND DNS 서버가 취약한 버전으로 실행되는 경우",
+        "general_mitigation": "BIND를 최신 버전으로 업데이트하고 보안 패치를 적용해야 합니다.",
+        "module": "rule_u33",
+        "check_script": "u-33.sh",
+        "original_script": "u-33.sh",
+        "checklist_items": [
+            "BIND 버전 확인 및 업데이트",
+            "DNS 서버 보안 패치 적용",
+            "DNS 서비스 보안 설정 강화",
+            "DNS 캐시 poisoning 방지 설정"
+        ],
+        "match": [{ "service": "dns", "port": 53 }]
+    },
+    "u-34": {
+        "name": "DNS Zone Transfer 제한 설정",
+        "description": "DNS Zone Transfer가 제한되지 않은 경우",
+        "general_mitigation": "DNS Zone Transfer를 특정 서버로만 제한해야 합니다.",
+        "module": "rule_u34",
+        "check_script": "u-34.sh",
+        "original_script": "u-34.sh",
+        "checklist_items": [
+            "allow-transfer 설정으로 Zone Transfer 제한",
+            "보조 DNS 서버만 Transfer 허용",
+            "DNS 설정 파일 보안 강화",
+            "DNS 조회 로그 모니터링"
+        ],
+        "match": [{ "service": "dns", "port": 53 }]
+    },
+    "u-35": {
+        "name": "웹 디렉터리 검색 기능 제한",
+        "description": "웹 서버에서 디렉터리 검색 기능(Indexes)이 활성화된 경우",
+        "general_mitigation": "웹 서버의 디렉터리 검색 기능을 비활성화해야 합니다.",
+        "module": "rule_u35",
+        "check_script": "u-35.sh",
+        "original_script": "u-35.sh",
+        "checklist_items": [
+            "Apache Options에서 Indexes 제거",
+            "디렉터리별 접근 제어 설정",
+            "기본 인덱스 페이지 설정",
+            "웹 디렉터리 구조 보안 검토"
+        ],
+        "match": [{ "service": "http", "port": 80 }]
+    },
+    "u-36": {
+        "name": "Apache 데몬 root 권한 구동",
+        "description": "Apache 웹 서버가 root 권한으로 구동되는 경우",
+        "general_mitigation": "Apache를 전용 사용자 계정으로 실행해야 합니다.",
+        "module": "rule_u36",
+        "check_script": "u-36.sh",
+        "original_script": "u-36.sh",
+        "checklist_items": [
+            "Apache User/Group을 root 이외로 설정",
+            "apache 전용 계정 생성 및 사용",
+            "웹 서버 프로세스 권한 최소화",
+            "웹 서버 보안 강화 설정"
+        ],
+        "match": [{ "service": "http", "port": 80 }]
+    },
+    "u-37": {
+        "name": "상위 디렉터리 접근 제한 설정",
+        "description": "웹 서버에서 상위 디렉터리 접근이 제한되지 않은 경우",
+        "general_mitigation": "상위 디렉터리 접근을 제한하고 AllowOverride 설정을 적절히 구성해야 합니다.",
+        "module": "rule_u37",
+        "check_script": "u-37.sh",
+        "original_script": "u-37.sh",
+        "checklist_items": [
+            "AllowOverride 설정 적절히 구성",
+            "디렉터리 접근 권한 제한",
+            ".htaccess 파일 보안 설정",
+            "웹 루트 외부 접근 차단"
+        ],
+        "match": [{ "service": "http", "port": 80 }]
+    },
+    "u-38": {
+        "name": "Apache 불필요한 기본 파일/디렉터리",
+        "description": "Apache 설치 시 생성된 불필요한 파일이나 디렉터리가 존재하는 경우",
+        "general_mitigation": "Apache 기본 매뉴얼, 예제 파일 등 불필요한 파일을 제거해야 합니다.",
+        "module": "rule_u38",
+        "check_script": "u-38.sh",
+        "original_script": "u-38.sh",
+        "checklist_items": [
+            "Apache 매뉴얼 디렉터리 제거",
+            "기본 예제 파일 제거",
+            "불필요한 CGI 스크립트 제거",
+            "웹 루트 정리 및 보안 강화"
+        ],
+        "match": [{ "service": "http", "port": 80 }]
+    },
+    "u-39": {
+        "name": "심볼릭 링크 사용 제한",
+        "description": "웹 서버에서 심볼릭 링크 사용이 제한되지 않은 경우",
+        "general_mitigation": "FollowSymLinks 옵션을 비활성화하여 심볼릭 링크 사용을 제한해야 합니다.",
+        "module": "rule_u39",
+        "check_script": "u-39.sh",
+        "original_script": "u-39.sh",
+        "checklist_items": [
+            "Options에서 FollowSymLinks 제거",
+            "SymLinksIfOwnerMatch 사용 검토",
+            "웹 디렉터리 심볼릭 링크 점검",
+            "파일 시스템 접근 제어 강화"
+        ],
+        "match": [{ "service": "http", "port": 80 }]
+    },
+    "u-40": {
+        "name": "파일 업로드/다운로드 사이즈 제한",
+        "description": "웹 서버에서 파일 업로드/다운로드 크기가 제한되지 않은 경우",
+        "general_mitigation": "LimitRequestBody를 사용하여 파일 크기를 제한해야 합니다.",
+        "module": "rule_u40",
+        "check_script": "u-40.sh",
+        "original_script": "u-40.sh",
+        "checklist_items": [
+            "LimitRequestBody 5MB 이하로 설정",
+            "업로드 파일 유형 제한",
+            "임시 파일 정리 정책 수립",
+            "파일 업로드 보안 검증"
+        ],
+        "match": [{ "service": "http", "port": 80 }]
+    },
+    "u-41": {
+        "name": "웹 루트 디렉터리 분리 설정",
+        "description": "웹 루트 디렉터리가 시스템 기본 위치로 설정된 경우",
+        "general_mitigation": "DocumentRoot를 시스템 기본 디렉터리가 아닌 별도 위치로 설정해야 합니다.",
+        "module": "rule_u41",
+        "check_script": "u-41.sh",
+        "original_script": "u-41.sh",
+        "checklist_items": [
+            "DocumentRoot를 기본 위치에서 변경",
+            "웹 컨텐츠 전용 디렉터리 생성",
+            "웹 루트 권한 최소화",
+            "시스템 파일과 웹 파일 분리"
+        ],
+        "match": [{ "service": "http", "port": 80 }]
+    },
+    "u-42": {
+        "name": "최신 패치 적용 여부",
+        "description": "시스템에 최신 보안 패치가 적용되지 않은 경우",
+        "general_mitigation": "정기적으로 보안 패치를 확인하고 적용해야 합니다.",
+        "module": "rule_u42",
+        "check_script": "u-42.sh",
+        "original_script": "u-42.sh",
+        "checklist_items": [
+            "운영체제 보안 패치 상태 확인",
+            "애플리케이션 보안 업데이트 확인",
+            "패치 적용 스케줄 수립",
+            "긴급 패치 대응 절차 마련"
+        ],
+        "match": [{ "service": "*" }]
+    },
+    "u-43": {
+        "name": "로그 정기 검토 여부",
+        "description": "시스템 로그가 정기적으로 검토되지 않는 경우",
+        "general_mitigation": "시스템 로그를 정기적으로 검토하고 이상 징후를 모니터링해야 합니다.",
+        "module": "rule_u43",
+        "check_script": "u-43.sh",
+        "original_script": "u-43.sh",
+        "checklist_items": [
+            "주요 로그 파일 정기 검토 (최근 30일)",
+            "로그 파일 순환 및 보관 정책",
+            "보안 이벤트 모니터링 설정",
+            "로그 분석 도구 활용"
+        ],
+        "match": [{ "service": "*" }]
+    }
+}

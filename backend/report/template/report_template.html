@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>GovScan 보안점검결과</title>
+  <style>
+    body { font-family: sans-serif; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    th, td { border: 1px solid #000; padding: 8px; vertical-align: top; }
+    th { background-color: #f0f0f0; }
+    .section-title { margin-top: 40px; font-size: 18px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>GovScan 점검 결과 보고서</h1>
+
+  {% for row in rows %}
+  <div class="section-title">▪ 호스트 {{ row.host }}</div>
+  <table>
+    <tr>
+      <th style="width: 15%;">호스트</th>
+      <td style="width: 35%;">{{ row.host }}</td>
+      <th style="width: 15%;">용도</th>
+      <td style="width: 35%;">{{ row.role }}</td>
+    </tr>
+    <tr>
+      <th>지적사항</th>
+      <td colspan="3">
+        {% for issue in row.issues %}
+          - {{ issue }}<br>
+        {% endfor %}
+        {% if row.cves %}
+          <br><b>탐지된 CVE:</b> {{ row.cves }}
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>증적</th>
+      <td colspan="3"><i>(추후 기입)</i></td>
+    </tr>
+    <tr>
+      <th>조치방법</th>
+      <td colspan="3">{{ row.mitigation }}</td>
+    </tr>
+  </table>
+  {% endfor %}
+</body>
+</html>

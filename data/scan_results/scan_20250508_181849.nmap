@@ -1,0 +1,202 @@
+# Nmap 7.80 scan initiated Thu May  8 18:18:49 2025 as: nmap -sS -p 1-1024 -sV -sC -A -T4 -oA data/scan_results/scan_20250508_181849 192.168.0.1/32 192.168.0.2/31 192.168.0.4/30 192.168.0.8/29 192.168.0.16/28 192.168.0.32/27 192.168.0.64/26 192.168.0.128/26 192.168.0.192/27 192.168.0.224/28 192.168.0.240/29 192.168.0.248/30 192.168.0.252/31 192.168.0.254/32 192.168.1.10/32 192.168.2.10/32 192.168.2.20/32 192.168.3.254/32
+Nmap scan report for 192.168.0.1
+Host is up (0.00040s latency).
+Not shown: 1020 closed ports
+PORT    STATE SERVICE    VERSION
+21/tcp  open  ftp        vsftpd 3.0.5
+| ftp-anon: Anonymous FTP login allowed (FTP code 230)
+|_Can't get directory listing: PASV IP 192.168.2.10 is not the same as 192.168.0.1
+| ftp-syst: 
+|   STAT: 
+| FTP server status:
+|      Connected to 192.168.1.10
+|      Logged in as ftp
+|      TYPE: ASCII
+|      No session bandwidth limit
+|      Session timeout in seconds is 300
+|      Control connection is plain text
+|      Data connections will be plain text
+|      At session startup, client count was 4
+|      vsFTPd 3.0.5 - secure, fast, stable
+|_End of status
+23/tcp  open  tcpwrapped
+80/tcp  open  http       Apache httpd 2.4.52 ((Ubuntu))
+|_http-server-header: Apache/2.4.52 (Ubuntu)
+|_http-title: \xEA\xB8\xB0\xEA\xB4\x80 \xED\x8F\xAC\xED\x84\xB8
+111/tcp open  rpcbind    2-4 (RPC #100000)
+| rpcinfo: 
+|   program version    port/proto  service
+|   100000  2,3,4        111/tcp   rpcbind
+|   100000  2,3,4        111/udp   rpcbind
+|   100000  3,4          111/tcp6  rpcbind
+|   100000  3,4          111/udp6  rpcbind
+|   100024  1          55744/udp6  status
+|   100024  1          58995/tcp   status
+|   100024  1          60267/udp   status
+|_  100024  1          65027/tcp6  status
+MAC Address: 86:5D:4A:78:F8:4D (Unknown)
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=7.80%E=4%D=5/8%OT=21%CT=1%CU=30374%PV=Y%DS=1%DC=D%G=Y%M=865D4A%TM
+OS:=681CF5A2%P=aarch64-unknown-linux-gnu)SEQ(SP=108%GCD=1%ISR=109%TI=Z%CI=Z
+OS:%TS=A)SEQ(SP=107%GCD=1%ISR=108%TI=Z%CI=Z%II=I%TS=A)OPS(O1=M5B4ST11NW7%O2
+OS:=M5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11NW7%O5=M5B4ST11NW7%O6=M5B4ST11)W
+OS:IN(W1=FE88%W2=FE88%W3=FE88%W4=FE88%W5=FE88%W6=FE88)ECN(R=Y%DF=Y%T=40%W=F
+OS:AF0%O=M5B4NNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T
+OS:3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S
+OS:=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R
+OS:=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T=40%IPL=164%UN=0%
+OS:RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: OS: Unix
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.40 ms 192.168.0.1
+
+Nmap scan report for client1.demo_shared_net (192.168.0.2)
+Host is up (0.00013s latency).
+All 1024 scanned ports on client1.demo_shared_net (192.168.0.2) are closed
+MAC Address: 86:F4:DD:A4:7C:CF (Unknown)
+Too many fingerprints match this host to give specific OS details
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.13 ms client1.demo_shared_net (192.168.0.2)
+
+Nmap scan report for client3.demo_shared_net (192.168.0.3)
+Host is up (0.000064s latency).
+All 1024 scanned ports on client3.demo_shared_net (192.168.0.3) are closed
+MAC Address: 92:22:AF:FB:52:CE (Unknown)
+Too many fingerprints match this host to give specific OS details
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.06 ms client3.demo_shared_net (192.168.0.3)
+
+Nmap scan report for client2.demo_shared_net (192.168.0.4)
+Host is up (0.000049s latency).
+All 1024 scanned ports on client2.demo_shared_net (192.168.0.4) are closed
+MAC Address: A2:4E:FE:D9:BF:3E (Unknown)
+Too many fingerprints match this host to give specific OS details
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.05 ms client2.demo_shared_net (192.168.0.4)
+
+Nmap scan report for client5.demo_shared_net (192.168.0.5)
+Host is up (0.000048s latency).
+All 1024 scanned ports on client5.demo_shared_net (192.168.0.5) are closed
+MAC Address: 82:ED:08:91:B0:41 (Unknown)
+Too many fingerprints match this host to give specific OS details
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.05 ms client5.demo_shared_net (192.168.0.5)
+
+Nmap scan report for client4.demo_shared_net (192.168.0.6)
+Host is up (0.000055s latency).
+All 1024 scanned ports on client4.demo_shared_net (192.168.0.6) are closed
+MAC Address: C2:5B:08:69:9C:DD (Unknown)
+Too many fingerprints match this host to give specific OS details
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.05 ms client4.demo_shared_net (192.168.0.6)
+
+Nmap scan report for db.demo_shared_net (192.168.2.10)
+Host is up (0.000064s latency).
+Not shown: 1023 closed ports
+PORT   STATE SERVICE VERSION
+21/tcp open  ftp     vsftpd 3.0.5
+| ftp-anon: Anonymous FTP login allowed (FTP code 230)
+| -rw-r--r--    1 0        0            3072 May 08 14:45 data.tar
+| -rw-r--r--    1 0        0             165 May 08 14:42 readme.txt
+|_-rw-r--r--    1 0        0             188 May 08 14:42 sample.csv
+| ftp-syst: 
+|   STAT: 
+| FTP server status:
+|      Connected to 192.168.1.10
+|      Logged in as ftp
+|      TYPE: ASCII
+|      No session bandwidth limit
+|      Session timeout in seconds is 300
+|      Control connection is plain text
+|      Data connections will be plain text
+|      At session startup, client count was 8
+|      vsFTPd 3.0.5 - secure, fast, stable
+|_End of status
+MAC Address: 4A:0F:ED:39:BF:B1 (Unknown)
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=7.80%E=4%D=5/8%OT=21%CT=1%CU=39491%PV=Y%DS=1%DC=D%G=Y%M=4A0FED%TM
+OS:=681CF5A2%P=aarch64-unknown-linux-gnu)SEQ(SP=103%GCD=1%ISR=106%TI=Z%CI=Z
+OS:%TS=A)SEQ(SP=105%GCD=1%ISR=108%TI=Z%CI=Z%II=I%TS=A)OPS(O1=M5B4ST11NW7%O2
+OS:=M5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11NW7%O5=M5B4ST11NW7%O6=M5B4ST11)W
+OS:IN(W1=FE88%W2=FE88%W3=FE88%W4=FE88%W5=FE88%W6=FE88)ECN(R=Y%DF=Y%T=40%W=F
+OS:AF0%O=M5B4NNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T
+OS:3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S
+OS:=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R
+OS:=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T=40%IPL=164%UN=0%
+OS:RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+Service Info: OS: Unix
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.06 ms db.demo_shared_net (192.168.2.10)
+
+Nmap scan report for web.demo_shared_net (192.168.2.20)
+Host is up (0.000033s latency).
+Not shown: 1022 closed ports
+PORT   STATE SERVICE    VERSION
+23/tcp open  tcpwrapped
+80/tcp open  http       Apache httpd 2.4.52 ((Ubuntu))
+|_http-server-header: Apache/2.4.52 (Ubuntu)
+|_http-title: \xEA\xB8\xB0\xEA\xB4\x80 \xED\x8F\xAC\xED\x84\xB8
+MAC Address: EE:A3:74:B9:E9:DF (Unknown)
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=7.80%E=4%D=5/8%OT=80%CT=1%CU=36665%PV=Y%DS=1%DC=D%G=Y%M=EEA374%TM
+OS:=681CF5A2%P=aarch64-unknown-linux-gnu)SEQ(SP=FD%GCD=1%ISR=101%TI=Z%CI=Z%
+OS:II=I%TS=A)SEQ(SP=FD%GCD=1%ISR=101%TI=Z%CI=Z%TS=A)OPS(O1=M5B4ST11NW7%O2=M
+OS:5B4ST11NW7%O3=M5B4NNT11NW7%O4=M5B4ST11NW7%O5=M5B4ST11NW7%O6=M5B4ST11)WIN
+OS:(W1=FE88%W2=FE88%W3=FE88%W4=FE88%W5=FE88%W6=FE88)ECN(R=Y%DF=Y%T=40%W=FAF
+OS:0%O=M5B4NNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(
+OS:R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=Y%DF=Y%T=40%W=0%S=Z
+OS:%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T7(R=Y
+OS:%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T=40%IPL=164%UN=0%RI
+OS:PL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=S)
+
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.03 ms web.demo_shared_net (192.168.2.20)
+
+Nmap scan report for dhcp.demo_shared_net (192.168.3.254)
+Host is up (0.00024s latency).
+All 1024 scanned ports on dhcp.demo_shared_net (192.168.3.254) are closed
+MAC Address: 8A:2E:D0:63:68:CF (Unknown)
+Too many fingerprints match this host to give specific OS details
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.24 ms dhcp.demo_shared_net (192.168.3.254)
+
+Nmap scan report for 4ba8edd87ca9 (192.168.1.10)
+Host is up (0.00024s latency).
+All 1024 scanned ports on 4ba8edd87ca9 (192.168.1.10) are closed
+Too many fingerprints match this host to give specific OS details
+Network Distance: 0 hops
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Thu May  8 18:19:17 2025 -- 258 IP addresses (10 hosts up) scanned in 28.60 seconds
