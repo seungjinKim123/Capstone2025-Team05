@@ -517,14 +517,20 @@ def generate_html_template(hosts, vulnerabilities, recommendations, eval_db, met
 
 
 def generate_scripts_section(rule_ids, eval_db, host_info):
-    """점검 스크립트 섹션 생성"""
+    """점검 스크립트 섹션 생성 (실제 스크립트 파일 기반)"""
     
     scripts_html = f'''
                 <button class="collapsible" onclick="toggleContent(this)">🔧 점검 스크립트 ({host_info})</button>
                 <div class="content-box">
                     <h4>자동화 점검 스크립트</h4>
-                    <p>발견된 취약점에 대한 점검 스크립트입니다. 각 항목을 클릭하여 상세 내용을 확인하세요.</p>
+                    <p>발견된 취약점에 대한 실제 점검 스크립트입니다. 스크립트를 다운로드하여 시스템에서 실행할 수 있습니다.</p>
 '''
+    
+    # script_generator에서 매핑 정보 가져오기
+    script_mapping = get_script_mapping()
+    scripts_base_dir = Path("data/db/scripts")
+    
+    processed_scripts = set()  # 중복 스크립트 방지
     
     for rule_id in sorted(rule_ids):
         rule_info = eval_db.get(rule_id, {})
@@ -532,17 +538,37 @@ def generate_scripts_section(rule_ids, eval_db, host_info):
             continue
             
         rule_name = rule_info.get("name", f"규칙 {rule_id}")
-        check_script = rule_info.get("check_script", "")
+        check_script_name = rule_info.get("check_script", "")
+        original_scripts = rule_info.get("original_script", "").split(",")
         
-        # 기본 점검 스크립트 생성
-        if not check_script:
-            check_script = generate_default_check_script(rule_id, rule_info)
+        # 실제 스크립트 파일 찾기
+        actual_scripts = find_actual_scripts(rule_id, script_mapping, scripts_base_dir, original_scripts)
         
-        scripts_html += f'''
+        if actual_scripts:
+            for script_path, script_name in actual_scripts:
+                if script_name in processed_scripts:
+                    continue
+                processed_scripts.add(script_name)
+                
+                script_content = load_script_content(script_path)
+                scripts_html += f'''
                     <div class="script-item">
-                        <div class="script-header">[{rule_id}] {rule_name}</div>
-                        <div class="script-code">{check_script}</div>
-                        <small><em>위 스크립트를 root 권한으로 실행하여 해당 항목을 점검할 수 있습니다.</em></small>
+                        <div class="script-header">[{rule_id}] {rule_name} - {script_name}</div>
+                        <div class="script-code">{script_content}</div>
+                        <div style="margin-top: 10px;">
+                            <small><strong>사용법:</strong> chmod +x {script_name} && ./{script_name} [target_ip]</small><br>
+                            <small><em>※ root 권한으로 실행하며, 대상 IP를 인자로 전달하세요.</em></small>
+                        </div>
+                    </div>
+'''
+        else:
+            # 기존 방식으로 폴백
+            auto_script = generate_auto_script_content(rule_id, rule_info)
+            scripts_html += f'''
+                    <div class="script-item">
+                        <div class="script-header">[{rule_id}] {rule_name} (자동생성)</div>
+                        <div class="script-code">{auto_script}</div>
+                        <small><em>기본 점검 스크립트가 생성되었습니다.</em></small>
                     </div>
 '''
     
@@ -551,13 +577,13 @@ def generate_scripts_section(rule_ids, eval_db, host_info):
 
 
 def generate_checklist_section(rule_ids, eval_db, host_info):
-    """체크리스트 섹션 생성"""
+    """체크리스트 섹션 생성 (eval_db의 실제 checklist_items 사용)"""
     
     checklist_html = f'''
                 <button class="collapsible" onclick="toggleContent(this)">📋 점검 체크리스트 ({host_info})</button>
                 <div class="content-box">
                     <h4>수동 점검 체크리스트</h4>
-                    <p>다음 항목들을 수동으로 점검하여 보안 수준을 확인하세요.</p>
+                    <p>다음 항목들을 수동으로 점검하여 보안 수준을 확인하세요. 각 항목은 실제 보안 가이드라인을 기반으로 작성되었습니다.</p>
 '''
     
     checklist_items = []
@@ -570,162 +596,293 @@ def generate_checklist_section(rule_ids, eval_db, host_info):
         rule_name = rule_info.get("name", f"규칙 {rule_id}")
         description = rule_info.get("description", "")
         mitigation = rule_info.get("general_mitigation", "")
+        original_script = rule_info.get("original_script", "")
         
-        # eval_db에서 체크리스트 항목 가져오기 (없으면 기본 생성)
+        # eval_db에서 실제 체크리스트 항목 가져오기
         db_checklist_items = rule_info.get("checklist_items", [])
-        if not db_checklist_items:
-            db_checklist_items = generate_default_checklist_items(rule_id, rule_info)
         
-        for item in db_checklist_items:
+        if db_checklist_items:
+            for item in db_checklist_items:
+                checklist_items.append({
+                    "rule_id": rule_id,
+                    "rule_name": rule_name,
+                    "item": item,
+                    "description": description,
+                    "mitigation": mitigation,
+                    "original_script": original_script
+                })
+        else:
+            # 체크리스트가 없는 경우 기본 항목 생성
+            default_item = f"{rule_name} 관련 보안 설정 확인"
             checklist_items.append({
                 "rule_id": rule_id,
                 "rule_name": rule_name,
-                "item": item,
+                "item": default_item,
                 "description": description,
-                "mitigation": mitigation
+                "mitigation": mitigation,
+                "original_script": original_script
             })
     
     # 체크리스트 항목 출력
     for idx, item_info in enumerate(checklist_items, 1):
+        original_ref = f" (참조: {item_info['original_script']})" if item_info['original_script'] else ""
+        
         checklist_html += f'''
                     <div class="checklist-item">
                         <input type="checkbox" class="checklist-checkbox" id="check_{idx}">
                         <label for="check_{idx}">
-                            <strong>[{item_info["rule_id"]}]</strong> {item_info["item"]}
-                            <br><small>{item_info["description"]}</small>
-                            {f'<br><em>조치방법: {item_info["mitigation"]}</em>' if item_info["mitigation"] else ''}
+                            <strong>[{item_info["rule_id"]}]</strong> {item_info["item"]}{original_ref}
+                            <br><small style="color: #666;">{item_info["description"]}</small>
+                            {f'<br><em style="color: #2e7d32;">💡 조치방법: {item_info["mitigation"]}</em>' if item_info["mitigation"] else ''}
                         </label>
                     </div>
 '''
+    
+    # 체크리스트 진행률 표시 JavaScript 추가
+    checklist_html += '''
+                    <div style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 6px;">
+                        <strong>점검 진행률: <span id="progress">0</span>/{total_items} (0%)</strong>
+                        <div style="width: 100%; background-color: #ddd; border-radius: 10px; margin-top: 5px;">
+                            <div id="progressBar" style="width: 0%; height: 10px; background-color: #4CAF50; border-radius: 10px; transition: width 0.3s;"></div>
+                        </div>
+                        <small style="color: #666; margin-top: 5px; display: block;">체크박스를 클릭하여 점검 진행률을 확인하세요.</small>
+                    </div>
+                    
+                    <script>
+                        function updateProgress() {{
+                            const checkboxes = document.querySelectorAll('.checklist-checkbox');
+                            const checkedBoxes = document.querySelectorAll('.checklist-checkbox:checked');
+                            const progress = checkedBoxes.length;
+                            const total = checkboxes.length;
+                            const percentage = total > 0 ? Math.round((progress / total) * 100) : 0;
+                            
+                            document.getElementById('progress').textContent = progress;
+                            document.getElementById('progressBar').style.width = percentage + '%';
+                            
+                            // 진행률에 따른 색상 변경
+                            const progressBar = document.getElementById('progressBar');
+                            if (percentage < 30) {{
+                                progressBar.style.backgroundColor = '#f44336';
+                            }} else if (percentage < 70) {{
+                                progressBar.style.backgroundColor = '#ff9800';
+                            }} else {{
+                                progressBar.style.backgroundColor = '#4CAF50';
+                            }}
+                        }}
+                        
+                        // 체크박스에 이벤트 리스너 추가
+                        document.addEventListener('DOMContentLoaded', function() {{
+                            const checkboxes = document.querySelectorAll('.checklist-checkbox');
+                            checkboxes.forEach(checkbox => {{
+                                checkbox.addEventListener('change', updateProgress);
+                            }});
+                            updateProgress(); // 초기 설정
+                        }});
+                    </script>
+'''.replace('{total_items}', str(len(checklist_items)))
     
     checklist_html += '</div>'
     return checklist_html
 
 
-def generate_default_check_script(rule_id, rule_info):
-    """기본 점검 스크립트 생성"""
-    
-    rule_name = rule_info.get("name", "")
-    
-    # 규칙 ID별 기본 스크립트 템플릿
-    script_templates = {
-        "20501": '''#!/bin/bash
-# 접근통제 점검 스크립트
-echo "=== 접근통제 설정 점검 ==="
-
-# FTP 익명 접속 확인
-if systemctl is-active vsftpd >/dev/null 2>&1; then
-    echo "FTP 서비스 상태: 실행 중"
-    grep -i "anonymous_enable" /etc/vsftpd.conf 2>/dev/null || echo "vsftpd 설정 파일 확인 필요"
-else
-    echo "FTP 서비스: 비활성화"
-fi
-
-# Telnet 서비스 확인
-if systemctl is-active telnet.socket >/dev/null 2>&1; then
-    echo "⚠️  Telnet 서비스가 실행 중입니다!"
-    systemctl status telnet.socket
-else
-    echo "✅ Telnet 서비스: 비활성화"
-fi
-''',
+def get_script_mapping():
+    """script_generator.py의 매핑 정보 가져오기"""
+    return {
+        # 기본 보안 정책 매핑
+        "11303": ["u-06.sh"],  # 관리대장 누락
+        "20501": ["u-01.sh", "u-20.sh"],  # 접근통제 미흡
+        "20502": ["u-01.sh"],  # SSH 약한 인증
+        "20503": ["u-19.sh", "u-21.sh", "u-23.sh", "u-29.sh"],  # 취약한 서비스
+        "30301": ["u-06.sh"],  # 네트워크 관리대장
+        "30501": ["u-19.sh", "u-23.sh", "u-24.sh", "u-26.sh", "u-27.sh", "u-28.sh", "u-29.sh"],  # 불필요한 서비스
+        "30601": [],  # SNMP 보안 (자동 생성)
+        "30701": ["u-35.sh", "u-36.sh", "u-37.sh", "u-38.sh", "u-39.sh", "u-40.sh", "u-41.sh"],  # 웹 서버 보안
+        "30802": [],  # 버전 정보 노출 (자동 생성)
+        "40101": ["u-42.sh"],  # 패치 관리
         
-        "20503": '''#!/bin/bash
-# 취약한 서비스 점검 스크립트
-echo "=== 취약한 서비스 점검 ==="
-
-# 위험한 서비스 목록
-RISKY_SERVICES=("telnet" "ftp" "rsh" "rlogin" "tftp")
-
-for service in "${RISKY_SERVICES[@]}"; do
-    if netstat -ln | grep ":$(getent services $service | cut -d' ' -f2 | cut -d'/' -f1)" >/dev/null 2>&1; then
-        echo "⚠️  $service 서비스가 실행 중입니다!"
-    else
-        echo "✅ $service 서비스: 비활성화"
-    fi
-done
-''',
-        
-        "30802": '''#!/bin/bash
-# 버전정보 노출 점검 스크립트
-echo "=== 서비스 배너 점검 ==="
-
-# SSH 배너 확인
-echo "SSH 서비스 배너:"
-ssh -o ConnectTimeout=5 localhost 2>&1 | head -1 || echo "SSH 연결 실패"
-
-# FTP 배너 확인 (FTP가 실행 중인 경우)
-if netstat -ln | grep ":21 " >/dev/null 2>&1; then
-    echo "FTP 서비스 배너:"
-    timeout 5 telnet localhost 21 2>/dev/null | head -3 || echo "FTP 연결 실패"
-fi
-
-# HTTP 서버 헤더 확인
-if netstat -ln | grep ":80 " >/dev/null 2>&1; then
-    echo "HTTP 서버 헤더:"
-    curl -I http://localhost 2>/dev/null | grep -i server || echo "HTTP 서버 정보 없음"
-fi
-'''
+        # 직접 매핑 (U-01 ~ U-43)
+        "u-01": ["u-01.sh"], "u-02": ["u-02.sh"], "u-03": ["u-03.sh"], "u-04": ["u-04.sh"], "u-05": ["u-05.sh"],
+        "u-06": ["u-06.sh"], "u-07": ["u-07.sh"], "u-08": ["u-08.sh"], "u-09": ["u-09.sh"], "u-10": ["u-10.sh"],
+        "u-11": ["u-11.sh"], "u-12": ["u-12.sh"], "u-13": ["u-13.sh"], "u-14": ["u-14.sh"], "u-15": ["u-15.sh"],
+        "u-16": ["u-16.sh"], "u-17": ["u-17.sh"], "u-18": ["u-18.sh"], "u-19": ["u-19.sh"], "u-20": ["u-20.sh"],
+        "u-21": ["u-21.sh"], "u-22": ["u-22.sh"], "u-23": ["u-23.sh"], "u-24": ["u-24.sh"], "u-25": ["u-25.sh"],
+        "u-26": ["u-26.sh"], "u-27": ["u-27.sh"], "u-28": ["u-28.sh"], "u-29": ["u-29.sh"], "u-30": ["u-30.sh"],
+        "u-31": ["u-31.sh"], "u-32": ["u-32.sh"], "u-33": ["u-33.sh"], "u-34": ["u-34.sh"], "u-35": ["u-35.sh"],
+        "u-36": ["u-36.sh"], "u-37": ["u-37.sh"], "u-38": ["u-38.sh"], "u-39": ["u-39.sh"], "u-40": ["u-40.sh"],
+        "u-41": ["u-41.sh"], "u-42": ["u-42.sh"], "u-43": ["u-43.sh"]
     }
+
+
+def find_actual_scripts(rule_id, script_mapping, scripts_base_dir, original_scripts):
+    """실제 스크립트 파일 찾기"""
+    found_scripts = []
     
-    return script_templates.get(rule_id, f'''#!/bin/bash
-# {rule_name} 점검 스크립트
-echo "=== {rule_name} 점검 ==="
-echo "이 항목에 대한 구체적인 점검 스크립트를 구현하세요."
-echo "규칙 ID: {rule_id}"
-''')
+    # 1. script_mapping에서 매핑된 스크립트 찾기
+    if rule_id in script_mapping and script_mapping[rule_id]:
+        for script_name in script_mapping[rule_id]:
+            script_path = scripts_base_dir / script_name
+            if script_path.exists():
+                found_scripts.append((script_path, script_name))
+    
+    # 2. original_script에서 지정된 스크립트 찾기
+    for script_ref in original_scripts:
+        script_ref = script_ref.strip()
+        if script_ref and script_ref.endswith('.sh'):
+            script_path = scripts_base_dir / script_ref
+            if script_path.exists():
+                found_scripts.append((script_path, script_ref))
+    
+    # 3. rule_id로 직접 매핑 (u-xx 형태)
+    if rule_id.startswith('u-'):
+        script_path = scripts_base_dir / f"{rule_id}.sh"
+        if script_path.exists():
+            found_scripts.append((script_path, f"{rule_id}.sh"))
+    
+    # 중복 제거
+    unique_scripts = []
+    seen_names = set()
+    for script_path, script_name in found_scripts:
+        if script_name not in seen_names:
+            unique_scripts.append((script_path, script_name))
+            seen_names.add(script_name)
+    
+    return unique_scripts
+
+
+def load_script_content(script_path, max_lines=30):
+    """스크립트 파일 내용 로드 (미리보기용)"""
+    try:
+        with open(script_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        
+        # 주석과 빈 줄 제거하여 핵심 내용만 표시
+        core_lines = []
+        for line in lines:
+            stripped = line.strip()
+            # 쉘 스크립트 헤더나 긴 주석 블록 건너뛰기
+            if stripped.startswith('#') and ('=' in stripped or len(stripped) > 50):
+                continue
+            core_lines.append(line.rstrip())
+        
+        # 최대 라인 수 제한
+        if len(core_lines) > max_lines:
+            core_lines = core_lines[:max_lines-2] + ['...', f'# (전체 {len(lines)}줄 중 {max_lines}줄만 표시)']
+        
+        return '\n'.join(core_lines)
+    
+    except Exception as e:
+        return f"# 스크립트 로드 실패: {e}\n# 파일 경로: {script_path}"
+
+
+def generate_auto_script_content(rule_id, rule_info):
+    """기존 스크립트가 없을 때 자동 생성하는 스크립트 내용"""
+    
+    name = rule_info.get("name", "")
+    description = rule_info.get("description", "")
+    
+    # 규칙별 기본 스크립트 템플릿
+    if rule_id == "30601":  # SNMP 보안
+        return '''#!/bin/bash
+# SNMP 보안 설정 점검 스크립트
+TARGET_IP=${1:-localhost}
+
+echo "=== SNMP 보안 점검 ==="
+echo "대상: $TARGET_IP"
+
+# SNMP 서비스 확인
+nmap -sU -p 161 $TARGET_IP 2>/dev/null | grep -q "161/udp open"
+if [ $? -eq 0 ]; then
+    echo "✅ SNMP 서비스 실행 중"
+    
+    # 기본 커뮤니티 스트링 테스트
+    for community in public private; do
+        if command -v snmpwalk >/dev/null 2>&1; then
+            timeout 5 snmpwalk -v2c -c $community $TARGET_IP 1.3.6.1.2.1.1.1.0 2>/dev/null | grep -q "STRING"
+            [ $? -eq 0 ] && echo "❌ 기본 커뮤니티 '$community' 사용 중" || echo "✅ '$community' 비활성화"
+        fi
+    done
+else
+    echo "❌ SNMP 서비스 미실행"
+fi'''
+    
+    elif rule_id == "30802":  # 버전정보 노출
+        return '''#!/bin/bash
+# 버전정보 노출 점검 스크립트
+TARGET_IP=${1:-localhost}
+
+echo "=== 버전정보 노출 점검 ==="
+echo "대상: $TARGET_IP"
+
+# HTTP 서버 버전 확인
+echo "1. HTTP 서버 버전 정보:"
+curl -I http://$TARGET_IP 2>/dev/null | grep -i "server:" || echo "HTTP 서비스 없음"
+
+# SSH 서버 버전 확인  
+echo "2. SSH 서버 버전 정보:"
+timeout 3 ssh -o ConnectTimeout=3 $TARGET_IP exit 2>&1 | head -1 || echo "SSH 연결 실패"
+
+# FTP 서버 버전 확인
+echo "3. FTP 서버 버전 정보:"
+timeout 3 telnet $TARGET_IP 21 2>/dev/null | head -2 || echo "FTP 서비스 없음"'''
+    
+    else:
+        return f'''#!/bin/bash
+# {name} 점검 스크립트 (자동생성)
+TARGET_IP=${{1:-localhost}}
+
+echo "=== {name} 점검 ==="
+echo "대상: $TARGET_IP"
+echo "설명: {description}"
+echo ""
+echo "⚠️  이 항목은 수동 점검이 필요합니다."
+echo "📋 체크리스트를 참조하여 점검을 수행하세요."'''
 
 
 def generate_default_checklist_items(rule_id, rule_info):
-    """기본 체크리스트 항목 생성"""
+    """기본 체크리스트 항목 생성 (eval_db에 없는 경우 사용)"""
     
     rule_name = rule_info.get("name", "")
     
-    # 규칙 ID별 기본 체크리스트
+    # 규칙 ID별 기본 체크리스트 (간소화된 버전)
     checklist_templates = {
         "20501": [
             "FTP 익명 접속이 비활성화되어 있는지 확인",
             "Telnet 서비스가 비활성화되어 있는지 확인", 
-            "SSH 키 기반 인증이 설정되어 있는지 확인",
-            "불필요한 계정이 비활성화되어 있는지 확인"
+            "SSH 키 기반 인증이 설정되어 있는지 확인"
         ],
         "20503": [
             "위험한 서비스(telnet, ftp, rsh 등)가 비활성화되어 있는지 확인",
-            "서비스가 기본 포트가 아닌 다른 포트에서 실행되는지 확인",
-            "방화벽에서 불필요한 포트가 차단되어 있는지 확인",
-            "서비스 실행 권한이 최소한으로 설정되어 있는지 확인"
+            "방화벽에서 불필요한 포트가 차단되어 있는지 확인"
         ],
         "30802": [
             "서비스 배너에서 버전 정보가 숨겨져 있는지 확인",
-            "웹 서버 응답 헤더에서 버전 정보가 제거되었는지 확인",
-            "SSH 배너에서 버전 정보가 숨겨져 있는지 확인",
-            "SNMP 커뮤니티 스트링이 기본값이 아닌지 확인"
-        ],
-        "30501": [
-            "불필요한 네트워크 서비스가 중지되어 있는지 확인",
-            "사용하지 않는 데몬 프로세스가 제거되었는지 확인",
-            "시스템 부팅 시 자동 시작되는 서비스를 점검했는지 확인",
-            "포트 스캔을 통해 열린 포트를 주기적으로 점검하는지 확인"
-        ],
-        "30601": [
-            "SNMP 커뮤니티 스트링이 기본값(public, private)이 아닌지 확인",
-            "SNMP v3을 사용하여 암호화 통신을 하는지 확인",
-            "SNMP 접근 제어 목록(ACL)이 설정되어 있는지 확인",
-            "불필요한 SNMP 서비스가 비활성화되어 있는지 확인"
-        ],
-        "40101": [
-            "시스템 패치가 정기적으로 적용되고 있는지 확인",
-            "보안 업데이트 정책이 수립되어 있는지 확인",
-            "패치 적용 전 테스트 절차가 있는지 확인",
-            "패치 적용 이력이 관리되고 있는지 확인"
+            "웹 서버 응답 헤더에서 버전 정보가 제거되었는지 확인"
         ]
     }
     
     return checklist_templates.get(rule_id, [
         f"{rule_name} 관련 보안 정책이 수립되어 있는지 확인",
-        f"{rule_name} 관련 설정이 보안 가이드라인에 따라 구성되었는지 확인",
-        f"{rule_name} 관련 로그가 기록되고 모니터링되는지 확인"
+        f"{rule_name} 관련 설정이 보안 가이드라인에 따라 구성되었는지 확인"
     ])
+
+
+def integrate_with_script_generator(eval_db_path: str, output_dir: str):
+    """script_generator.py와 통합하여 실제 스크립트 생성"""
+    try:
+        # script_generator 모듈 import
+        from backend.report.script_generator import generate_check_scripts
+        
+        print("🔧 점검 스크립트 생성 중...")
+        generate_check_scripts(eval_db_path, output_dir)
+        print(f"✅ 점검 스크립트 생성 완료: {output_dir}")
+        
+        return True
+    except ImportError:
+        print("⚠️  script_generator 모듈을 찾을 수 없습니다.")
+        return False
+    except Exception as e:
+        print(f"❌ 스크립트 생성 실패: {e}")
+        return False
 
 
 def calculate_severity_score(rule_code: str, violation_info: Dict[str, Any]) -> int:
