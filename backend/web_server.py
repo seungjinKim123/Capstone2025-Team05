@@ -55,53 +55,63 @@ def run_vuln_analysis_with_file(scan_parsed_file: str):
         from backend.vuln_checker.core import run_all_checks
         analysis_results = run_all_checks()
         
-        # 5. 결과 검증
-        if not analysis_results:
-            # 빈 결과인 경우 기본 구조 생성
-            analysis_results = {
-                "scan_summary": {
-                    "total_hosts": 0,
-                    "total_vulnerabilities": 0,
-                    "critical_count": 0,
-                    "high_count": 0,
-                    "medium_count": 0,
-                    "low_count": 0,
-                    "info_count": 0
-                },
-                "vulnerabilities": [],
-                "hosts": [],
-                "recommendations": [
-                    "스캔 결과를 확인하여 취약점을 분석하세요.",
-                    "네트워크 보안 정책을 검토하세요."
-                ],
-                "status": "completed_with_empty_result",
-                "timestamp": datetime.now().isoformat(),
-                "source_file": scan_parsed_file
+        # 5. 보고서 생성 (개선된 오류 처리)
+        scan_info["progress"] = 90
+        scan_info["current_step"] = "보고서 생성 중..."
+        print(f"[{scan_id}] 보고서 생성 시작...")
+        
+        scan_info_data = {
+            "ip_range": f"{ip_count}개 IP",
+            "scan_date": scan_info["start_time"]
+        }
+        
+        try:
+            report_package = generate_comprehensive_report(
+                results_path=results_path,
+                eval_db_path="data/db/eval_db.json",
+                output_dir=f"data/reports/{scan_id}",
+                scan_info=scan_info_data
+            )
+            
+            if report_package:
+                print(f"[{scan_id}] 보고서 생성 성공!")
+                scan_info["results"] = report_package
+            else:
+                print(f"[{scan_id}] 보고서 생성 실패 - 기본 결과 사용")
+                scan_info["results"] = {
+                    "html_report": f"data/reports/{scan_id}/basic_report.html",
+                    "json_results": results_path,
+                    "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
+                }
+                
+        except Exception as report_error:
+            print(f"[{scan_id}] 보고서 생성 오류: {report_error}")
+            # 보고서 생성 실패해도 스캔은 완료로 처리
+            scan_info["results"] = {
+                "json_results": results_path,
+                "error": str(report_error),
+                "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
             }
-        else:
-            # 결과에 메타데이터 추가
-            if isinstance(analysis_results, dict):
-                analysis_results["timestamp"] = datetime.now().isoformat()
-                analysis_results["source_file"] = scan_parsed_file
         
-        return analysis_results
+        # 완료 처리
+        scan_info["progress"] = 100
+        scan_info["status"] = "completed"
+        scan_info["current_step"] = "완료"
+        scan_info["end_time"] = datetime.now().isoformat()
         
-    except ImportError as e:
-        return {
-            "scan_summary": {"total_hosts": 0, "total_vulnerabilities": 0},
-            "vulnerabilities": [],
-            "status": "module_import_error",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }
+        print(f"[{scan_id}] 스캔 완료!")
+        
     except Exception as e:
-        return {
-            "scan_summary": {"total_hosts": 0, "total_vulnerabilities": 0},
-            "vulnerabilities": [],
-            "status": "analysis_error",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }
+        print(f"[{scan_id}] 스캔 실패: {e}")
+        scan_info["status"] = "failed"
+        scan_info["error"] = str(e)
+        scan_info["end_time"] = datetime.now().isoformat()
+        scan_info["progress"] = 0
+        scan_info["current_step"] = f"실패: {str(e)}"
+    
+    finally:
+        # 스캔 히스토리 저장
+        self.save_scan_history()
 
 
 class ScanManager:
@@ -180,7 +190,7 @@ class ScanManager:
             nmap_result = run_nmap_scan(
                 input_file=f"data/ip_ranges/ip_cidr_{scan_id}.txt",
                 output_dir=f"data/scan_results/{scan_id}",
-                ports=scan_config.get("ports", "1-1024"),
+                ports=scan_config.get("ports", "1-10000"),
                 scan_type=scan_config.get("scan_type", "-sS"),
                 additional_args=scan_config.get("additional_args", "-sV -sC -A -T4")
             )
