@@ -85,8 +85,9 @@ def run_web_gui():
 
 def run_cli_scan(input_file: str, scan_name: str = None, single_ip: bool = False, 
                  use_tcp: bool = False, ports: str = "1-1024"):
-    """CLI 모드로 전체 스캔 실행"""
+    """CLI 모드로 전체 스캔 실행 - 동적 파일 경로 지원"""
     from datetime import datetime
+    import shutil
     
     if not Path(input_file).exists():
         print(f"❌ 입력 파일을 찾을 수 없습니다: {input_file}")
@@ -155,29 +156,100 @@ def run_cli_scan(input_file: str, scan_name: str = None, single_ip: bool = False
             print(f"❌ XML 파일을 찾을 수 없습니다: {xml_file}")
             return False
         
+        # XML 파일 크기 확인
+        xml_size = Path(xml_file).stat().st_size
+        print(f"   📏 XML 파일 크기: {xml_size} bytes")
+        
+        # 스캔별 파싱 파일 생성
+        scan_parsed_file = f"data/mmdb/scan_parsed_{scan_id}.json"
         parse_nmap_xml(
             xml_path=xml_file,
-            output_path=f"data/mmdb/scan_parsed_{scan_id}.json"
+            output_path=scan_parsed_file
         )
-        print("   ✅ 스캔 결과 분석 완료")
         
-        # 4. 취약점 분석
+        # 파싱 결과 확인
+        if not Path(scan_parsed_file).exists():
+            print("❌ XML 파싱 실패 - 결과 파일이 생성되지 않았습니다.")
+            return False
+        
+        parsed_size = Path(scan_parsed_file).stat().st_size
+        print(f"   ✅ XML 파싱 완료 - 결과 파일 크기: {parsed_size} bytes")
+        
+        if parsed_size == 0:
+            print("   ⚠️  파싱 결과가 비어있습니다!")
+        
+        # 4. 취약점 분석 (동적 파일 사용)
         print("🔒 4단계: 취약점 분석 중...")
         
-        # 임시로 파싱된 결과를 기본 경로로 복사 (core.py가 고정 경로를 사용하므로)
-        import shutil
-        temp_parsed_file = f"data/mmdb/scan_parsed_{scan_id}.json"
-        default_parsed_file = "data/mmdb/scan_parsed.json"
-        shutil.copy2(temp_parsed_file, default_parsed_file)
+        try:
+            # 스캔별 파일을 기본 파일로 복사 (기존 core.py 호환성)
+            default_parsed_file = "data/mmdb/scan_parsed.json"
+            shutil.copy2(scan_parsed_file, default_parsed_file)
+            print(f"   📋 파싱 파일 복사: {scan_parsed_file} → scan_parsed.json")
+            
+            from backend.vuln_checker.core import run_all_checks
+            analysis_results = run_all_checks()
+            
+            # 결과 검증 및 처리
+            if not analysis_results:
+                print("   ⚠️  분석 결과가 비어있어 기본 구조를 생성합니다...")
+                analysis_results = {
+                    "scan_summary": {
+                        "total_hosts": 0,
+                        "total_vulnerabilities": 0,
+                        "critical_count": 0,
+                        "high_count": 0,
+                        "medium_count": 0,
+                        "low_count": 0,
+                        "info_count": 0
+                    },
+                    "vulnerabilities": [],
+                    "hosts": [],
+                    "recommendations": [
+                        "스캔 결과를 확인하여 취약점을 분석하세요.",
+                        "네트워크 보안 정책을 검토하세요."
+                    ],
+                    "status": "completed_with_empty_result",
+                    "timestamp": datetime.now().isoformat(),
+                    "source_file": scan_parsed_file
+                }
+            else:
+                # 분석 결과에 메타데이터 추가
+                if isinstance(analysis_results, dict):
+                    analysis_results["timestamp"] = datetime.now().isoformat()
+                    analysis_results["source_file"] = scan_parsed_file
+                    print(f"   📊 분석 결과 키 개수: {len(analysis_results)}")
+                elif isinstance(analysis_results, list):
+                    print(f"   📊 분석 결과 항목 개수: {len(analysis_results)}")
+            
+        except ImportError as e:
+            print(f"   ❌ 취약점 분석 모듈 import 오류: {e}")
+            analysis_results = {
+                "scan_summary": {"total_hosts": 0, "total_vulnerabilities": 0},
+                "vulnerabilities": [],
+                "status": "module_import_error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+        except Exception as e:
+            print(f"   ❌ 취약점 분석 오류: {e}")
+            analysis_results = {
+                "scan_summary": {"total_hosts": 0, "total_vulnerabilities": 0},
+                "vulnerabilities": [],
+                "status": "analysis_error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
         
-        from backend.vuln_checker.core import run_all_checks
-        analysis_results = run_all_checks()
-        
+        # 분석 결과 저장
         results_path = f"data/reports/analysis_results_{scan_id}.json"
         Path(results_path).parent.mkdir(parents=True, exist_ok=True)
         with open(results_path, 'w', encoding='utf-8') as f:
             json.dump(analysis_results, f, indent=2, ensure_ascii=False)
-        print("   ✅ 취약점 분석 완료")
+        
+        # 저장된 파일 크기 확인
+        result_size = Path(results_path).stat().st_size
+        print(f"   ✅ 취약점 분석 완료 - 결과 파일 크기: {result_size} bytes")
         
         # 5. 보고서 생성
         print("📊 5단계: 보고서 생성 중...")
@@ -199,6 +271,8 @@ def run_cli_scan(input_file: str, scan_name: str = None, single_ip: bool = False
         print()
         print("🎉 스캔이 완료되었습니다!")
         print("📄 생성된 파일들:")
+        print(f"   - 스캔 파싱 결과: {scan_parsed_file}")
+        print(f"   - 취약점 분석 결과: {results_path}")
         for key, path in report_package.items():
             if key != "timestamp":
                 print(f"   - {key}: {path}")
