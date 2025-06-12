@@ -180,7 +180,7 @@ class ScanManager:
             nmap_result = run_nmap_scan(
                 input_file=f"data/ip_ranges/ip_cidr_{scan_id}.txt",
                 output_dir=f"data/scan_results/{scan_id}",
-                ports=scan_config.get("ports", "1-10000"),
+                ports=scan_config.get("ports", "1-1024"),
                 scan_type=scan_config.get("scan_type", "-sS"),
                 additional_args=scan_config.get("additional_args", "-sV -sC -A -T4")
             )
